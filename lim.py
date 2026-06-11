@@ -24,14 +24,17 @@ class LIM():
         w, vl, vr = lg.eig(self.L, left=True)
         # Sorting by magnitude, largest eigenvalue first
         sortindex = np.argsort(np.abs(w))
-        self.w = w[sortindex][::-1]
+        w = w[sortindex][::-1]
         vr = vr[:, sortindex][:, ::-1]
         vl = vl[:, sortindex][:, ::-1]
         # Rotating eigenvectors and storing them
-        self.vr = self.__rotate_vector__(vr)
-        self.vl = self.__rotate_vector__(vl)
+        vr = self.__rotate_vector__(vr)
+        # Normalizing adjoints so vl[:, i] @ vr[:, j] = delta(i, j)
+        vl = vl / np.sqrt(self.__vmat_dot__(vr, np.conj(vr)))
 
-        return
+        self.w = w
+        self.vr = vr
+        self.vl = vl
     
     def getSystemMatrix(self):
         '''
@@ -87,7 +90,7 @@ class LIM():
 
         # If imaginary product is smaller than real product
         # AND the imaginary product is non zero
-        # Swap real and imaginary part of vr
+        # Swap real and imaginary part of v
         mask = (imag_prod < real_prod) * (imag_prod != 0)
         v[:, mask] = np.real(v[:, mask]) * 1j + np.imag(v[:, mask])
 
